@@ -1,0 +1,23 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+    client_max_body_size 32M;
+
+    # Weiterleitung an Backend via dynamischer Laufzeit-Variable
+    location /api/ {
+        proxy_pass ${BACKEND_URL}/;
+        proxy_ssl_server_name on;
+    }
+
+    # SPA Routing (React)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Caching für Assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
