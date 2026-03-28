@@ -1,5 +1,5 @@
 # Vertex AI SDK
-google-cloud-aiplatform>=1.38.0
+google-cloud-aiplatform>=1.65.0
 
 # Web Framework
 fastapi>=0.110.0

@@ -40,6 +40,11 @@ export default function App() {
 
         if (selectedFiles.length === 0) return;
         
+        if (files.length + selectedFiles.length > 5) {
+            setError("Bitte lade maximal 5 Fotos hoch.");
+            return;
+        }
+        
         setLoading(true);
         setError(null);
 
@@ -113,7 +118,12 @@ export default function App() {
 
             setResult(data);
         } catch (err) {
-            setError(err.message);
+            console.error(err);
+            if (err.message.includes("google") || err.message.includes("Vertex") || err.message.includes("supported")) {
+                setError("Google Cloud Fehler: Die Websuche ist in dieser Region aktuell eingeschränkt oder das API-Format hat sich geändert. Bitte versuche es später noch einmal.");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
