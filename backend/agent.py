@@ -18,7 +18,7 @@ import re
 from typing import Optional
 
 import vertexai
-from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
+from vertexai.generative_models import GenerativeModel, Part, GenerationConfig, Tool, grounding
 
 from prompts import (
     SYSTEM_PROMPT,
@@ -55,10 +55,14 @@ class VintedListingAgent:
         # Vertex AI initialisieren
         vertexai.init(project=project_id, location=location)
         
+        # Google Search Tool für Echtzeit-Preise aktivieren
+        google_search_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
+        
         # Gemini Modell laden
         self.model = GenerativeModel(
             model_name="gemini-2.0-flash-001",
             system_instruction=SYSTEM_PROMPT,
+            tools=[google_search_tool],
             generation_config=GenerationConfig(
                 temperature=0.7,
                 top_p=0.9,

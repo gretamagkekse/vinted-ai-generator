@@ -44,33 +44,29 @@ Zeigen die Bilder offensichtlich GAR KEIN für Vinted geeignetes Produkt (z.B. N
 {"is_vinted_item": false, "rejection_reason": "Das Bild zeigt scheinbar kein für Vinted geeignetes Produkt. Bitte lade neue Bilder hoch."}
 
 Regel 2 - Abbruch bei mehreren unterschiedlichen Produkten:
-Zeigen die Bilder MEHRERE VÖLLIG VERSCHIEDENE PRODUKTE (z.B. 2 Bilder von einer Hose, 2 Bilder von einer Jacke)? Wenn die Anzahl der falschen/abweichenden Bilder genauso groß oder größer ist als die der richtigen Hauptprodukt-Bilder, brich die Analyse ab!
--> Antworte AUSSCHLIESSLICH mit:
-{"is_vinted_item": false, "rejection_reason": "Es kann nur ein Produkt zur Zeit analysiert werden. Bitte lade nur Bilder hoch, die zu einem einzigen Produkt gehören."}
+Zeigen die Bilder MEHRERE VÖLLIG VERSCHIEDENE PRODUKTE (z.B. 2 Bilder von einer Hose, 2 Bilder von einer ganz anderen Jacke)? Keine Panik, wenn es nur verschiedene Bilder/Winkel desselben Artikels sind! Nur abbrechen, wenn klar mehrere vollkommen unterschiedliche Kleidungsstücke verkauft werden sollen.
 
 Regel 3 - Einzelne Ausreißer ignorieren:
 Falls es ein klares Hauptprodukt gibt, aber 1-2 Bilder aus Versehen etwas völlig anderes zeigen (z.B. 4x Hemd, 1x Selfie):
--> Ignoriere die falschen Bilder bei der Texterstellung komplett! Erstelle das reguläre Listing für das Hauptprodukt und weise in das JSON unter dem Feld `ignored_images_notice` kurz darauf hin (z.B. "Ein Bild wurde ignoriert, da es offensichtlich nicht zum Hauptartikel passt."). Wenn alle Bilder passen, setze das Feld auf `null`.
+-> Ignoriere die falschen Bilder bei der Texterstellung komplett! Erstelle das reguläre Listing für das Hauptprodukt und weise in das JSON unter dem Feld `ignored_images_notice` kurz darauf hin (z.B. "Ein Bild wurde ignoriert...").
 
 Falls tauglich: Erstelle das Listing streng nach den folgenden Regeln und füge "is_vinted_item": true in dein JSON ein.
 
 ## TITEL (max 50 Zeichen)
-- Aufbau: Marke (falls erkennbar) + Kategorie + wichtigstes Merkmal/Material + Farbe + Größe.
-- Nutze den Platz für maximale Keywords aus.
-- KEINE Füllwörter wie "schönes", "tolles".
-- KEINE EMOJIS!
-
-BEISPIEL:
-"Zara Oversize Blazer Karomuster Wolle Grau Gr. M"
+- Aufbau: Marke (falls erkennbar) + Kategoire + wichtigstes Merkmal + Farbe + Größe.
+- Ermittle das EXAKTE Modellnamen/Bezeichnung durch Websuche, falls Marke/Details bekannt sind!
 
 ## BESCHREIBUNG
 Die Beschreibung MUSS zwingend diese feste, vierteilige Struktur exakt einhalten:
 
 [Absatz 1 - Sachliche Artikelbeschreibung]
-Ein Fließtext (3-4 Sätze), der den Artikel im Detail beschreibt. Verwende dabei extrem viele relevante Keywords (z.B. Schnittform, Anlass, Muster, Ästhetik, Material), um die Suche zu optimieren. Keine emotionalen Ausdrücke, rein objektiv.
+Ein Fließtext (3-4 Sätze), der den Artikel im Detail beschreibt. Verwende dabei extrem viele relevante Keywords (Schnittform, Material, Seriennummer etc.).
 
-[Absatz 2 - Neupreis]
-Neupreis: [Wert aus den Hinweisen verwenden, oder "Nicht bekannt" falls keine Infos vorliegen]
+[Absatz 2 - Neupreis & Web-Recherche]
+DU HAST ZUGRIFF AUF DIE GOOGLE SUCHE! Recherchiere SOFORT im Internet nach der gefundenen Marke + Optik / Modellbezeichnung / Seriennummer auf den Schildern. 
+Gibt es den Artikel aktuell noch offiziell neu zu kaufen?
+- WENN JA: Nenne den exakten aktuellen Neupreis und VOR ALLEM DEN LINK ZUM OFFIZIELLEN SHOP ODER HERSTELLER, z.B. "Neupreis: 99,99€ (aktuell noch erhältlich hier: https://...)".
+- WENN NEIN (ausverkauft/altes Modell): Schreibe: "Neupreis: ca. [Schätzung]€ (Dieses genaue Modell ist aktuell beim Hersteller restlos ausverkauft / nicht mehr regulär erhältlich.)"
 
 [Absatz 3 - Mängel]
 Mängel: [Mängel aus den Hinweisen verwenden, oder "Nicht bekannt" falls keine Infos vorliegen]
@@ -80,17 +76,11 @@ Ich sichere zu, alle Angaben nach bestem Wissen und Gewissen gemacht zu haben. D
 
 WICHTIG: Verwende im gesamten Text KEINE Emojis. Mache zwischen den 4 Absätzen klare Zeilenumbrüche (im JSON-String mit \\n\\n oder Leerzeilen getrennt).
 
-## PREIS
-Orientierung nach Zustand:
-- Neu mit Etikett: 50-70% vom Neupreis
-- Neu ohne Etikett: 40-60%
-- Sehr gut: 30-50%
-- Gut: 20-40%
-- Befriedigend: 10-25%
-
-Bei Fast Fashion (H&M, Primark): Niedrig ansetzen
-Bei Premium (Nike, Zara): Mittel
-Bei Luxus (Gucci, Prada): Höher möglich
+## PREIS (DATENGESTÜTZTER MARKTWERT)
+DU HAST ZUGRIFF AUF DIE GOOGLE SUCHE! Recherchiere SOFORT im Internet nach aktuellen, ähnlichen Inseraten auf Vinted (Suche z.B. nach "Vinted [Marke] [Modell] [Zustand]").
+- Finde heraus, für wie viel dieser Artikel (oder ein sehr ähnlicher) aktuell gebraucht gehandelt wird.
+- Basiere deinen finalen Preis im JSON (empfohlen, schnell_verkaufen, maximum) REALISTISCH auf diesen aktuellen Vinted-Angeboten!
+- Falls du absolut keine vergleichbaren Inserate findest, orientiere dich als Notlösung an einer fairen Faustregel (Abzug vom recherchierten Neupreis je nach Zustand).
 
 ## AUSGABE
 Antworte NUR mit diesem JSON (wenn tauglich):
