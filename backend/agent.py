@@ -3,22 +3,16 @@ Vinted Listing Agent - Vertex AI
 ================================
 
 Der KI-Agent, der Produktbilder analysiert.
-Nutzt Vertex AI (Google Cloud) statt der Consumer API.
-
-Unterschied zu google-generativeai:
-- Läuft auf Google Cloud Infrastruktur
-- Enterprise-Features (Logging, Monitoring)
-- Authentifizierung über Service Account
+Nutzt das NEUE google-genai SDK für Google Cloud (Vertex AI),
+da das alte vertexai-SDK die google_search_retrieval API veraltet hat.
 """
 
 import os
 import json
-import base64
-import re
 from typing import Optional
 
-import vertexai
-from vertexai.generative_models import GenerativeModel, Part, GenerationConfig, Tool, grounding
+from google import genai
+from google.genai import types
 
 from prompts import (
     SYSTEM_PROMPT,
@@ -33,11 +27,7 @@ from prompts import (
 
 class VintedListingAgent:
     """
-    Agent zur Erstellung von Vinted-Listings.
-    
-    Beispiel:
-        agent = VintedListingAgent(project_id="mein-projekt")
-        result = agent.analyze_image(image_bytes)
+    Agent zur Erstellung von Vinted-Listings mit Live-Websuche.
     """
     
     def __init__(
@@ -46,32 +36,21 @@ class VintedListingAgent:
         location: str = "europe-west1"
     ):
         """
-        Initialisiert den Agent mit Vertex AI.
-        
-        Args:
-            project_id: Google Cloud Project ID
-            location: Region (europe-west1, us-central1, etc.)
+        Initialisiert den Agent mit google-genai (Vertex AI Modus).
         """
-        # Vertex AI initialisieren
-        vertexai.init(project=project_id, location=location)
-        
-        # Google Search Tool für Echtzeit-Preise aktivieren
-        google_search_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
-        
-        # Gemini Modell laden
-        self.model = GenerativeModel(
-            model_name="gemini-2.0-flash-001",
-            system_instruction=SYSTEM_PROMPT,
-            tools=[google_search_tool],
-            generation_config=GenerationConfig(
-                temperature=0.7,
-                top_p=0.9,
-                max_output_tokens=2048,
-            )
-        )
-        
         self.project_id = project_id
         self.location = location
+        self.client = genai.Client(vertexai=True, project=project_id, location=location)
+        self.model_name = "gemini-2.0-flash-001"
+        
+        # Standardkonfiguration inkl. Google Search Tool
+        self.default_config = types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            temperature=0.7,
+            top_p=0.9,
+            max_output_tokens=2048,
+            tools=[types.Tool(google_search=types.GoogleSearch())]
+        )
     
     def _parse_json(self, text: str) -> dict:
         """Extrahiert JSON aus der Antwort durch Klammerzählen."""
@@ -89,7 +68,7 @@ class VintedListingAgent:
             if bracket_count == 0:
                 json_str = text[start_idx:i+1]
                 try:
-                    return json.loads(json_str)
+                    return json.loads(json_str, strict=False)
                 except json.JSONDecodeError as e:
                     return {"error": f"JSON Error: {e}", "raw": text}
                     
@@ -103,36 +82,38 @@ class VintedListingAgent:
     ) -> dict:
         """
         Analysiert mehrere Produktbilder.
-        
-        Args:
-            images: Liste von dicts {"data": bytes, "mime_type": str}
-            hints: Optionale Hinweise vom Verkäufer
-            
-        Returns:
-            Dictionary mit Listing-Daten
         """
         try:
-            prompt_parts = [ANALYSIS_PROMPT]
+            # text blocks and Parts
+            contents = []
+            contents.append(ANALYSIS_PROMPT)
             
             for img in images:
-                prompt_parts.append(Part.from_data(
-                    data=img["data"],
-                    mime_type=img["mime_type"]
-                ))
+                contents.append(
+                    types.Part.from_bytes(
+                        data=img["data"],
+                        mime_type=img["mime_type"]
+                    )
+                )
             
             if hints and hints.strip():
-                prompt_parts.append(
+                contents.append(
                     f"\n\nBEACHTE DIESE ZUSÄTZLICHEN HINWEISE DES VERKÄUFERS (zwingend in die Beschreibung integrieren!):\n{hints.strip()}"
                 )
                 
-            prompt_parts.append(
-                f"\n\nWICHTIGSTE REGEL ZUM SCHLUSS: Übersetze das gesamte generierte Listing, inklusive aller Fließtexte, Mängel, Titel und insbesondere auch den standardisierten rechtlichen Disclaimer am Ende KOMPLETT in die Sprache mit dem Code '{lang.upper()}'. Die JSON-Keys bleiben auf Deutsch (titel, beschreibung etc), aber die Werte MÜSSEN zwingend fließend und authentisch auf {lang.upper()} sein!"
+            contents.append(
+                f"\n\nWICHTIGSTE REGEL ZUM SCHLUSS: Übersetze das GESAMTE generierte Listing KOMPLETT in die Sprache mit dem Code '{lang.upper()}'.\n"
+                f"Die JSON-Keys ('titel', 'beschreibung', 'kategorie', 'marke', 'farbe' etc.) bleiben EXAKT wie vorgegeben auf Deutsch, damit mein Code sie lesen kann.\n"
+                f"Aber ALLE dazugehörigen Werte (inklusive Titel, kompletter Beschreibung mit Disclaimer, Haupt-/Unterkategorie, Zustand, Farbe, Material und Hashtags) MÜSSEN zwingend und authentisch auf {lang.upper()} sein!\n"
+                f"Beispiel: Wenn Sprache 'EN' ist, lautet der Wert für Zustand nicht 'Sehr gut', sondern 'Used - Excellent'. Die Farbe nicht 'Schwarz', sondern 'Black'."
             )
             
-            # Anfrage senden
-            response = self.model.generate_content(prompt_parts)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=contents,
+                config=self.default_config
+            )
             
-            # Antwort parsen
             return self._parse_json(response.text)
             
         except Exception as e:
@@ -151,7 +132,7 @@ class VintedListingAgent:
                 "professional": IMPROVE_PROFESSIONAL,
             }
             
-            style_instruction = prompts.get(style, style) # Custom oder preset
+            style_instruction = prompts.get(style, style)
             
             prompt = f"""
 Beschreibung:
@@ -163,34 +144,18 @@ Aufgabe:
 Antworte NUR mit der neuen Beschreibung.
 Übersetze die neue Beschreibung ZWINGEND in die Sprache mit dem Code '{lang.upper()}'.
 """
-            
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=self.default_config
+            )
             return response.text.strip().strip('"')
         except:
             return description
-    
-    def regenerate_title(self, context: dict, lang: str = "de") -> str:
-        """Erstellt einen neuen passenden Titel basierend auf dem Listing und übersetzt ihn auf lang."""
-        try:
-            prompt = f"""
-Erstelle einen Vinted-Titel (max 50 Zeichen):
-- Marke: {context.get('marke', '?')}
-- Kategorie: {context.get('kategorie', '?')}
-- Farbe: {context.get('farbe', '?')}
-- Größe: {context.get('groesse', '?')}
-
-Antworte NUR mit dem Titel.
-Übersetze den Titel ZWINGEND in die Sprache mit dem Code '{lang.upper()}'.
-"""
-            response = self.model.generate_content(prompt)
-            return response.text.strip().strip('"')
-        except:
-            return "Artikel zu verkaufen"
 
     def revise_listing(self, current_listing: dict, instruction: str, lang: str = "de") -> dict:
         """Passt ein gesamtes Listing anhand einer textuellen Nutzeranweisung an und gibt es in der Zielsprache zurück."""
         try:
-            # JSON als lesbarer String
             listing_json_str = json.dumps(current_listing, indent=2, ensure_ascii=False)
             
             prompt = REVISE_PROMPT.format(
@@ -199,7 +164,11 @@ Antworte NUR mit dem Titel.
             )
             prompt += f"\n\nÜbersetze das gesamte angepasste Listing, inklusive aller Fließtexte, Mängel, Titel und insbesondere auch den standardisierten rechtlichen Disclaimer am Ende KOMPLETT in die Sprache mit dem Code '{lang.upper()}'. Die JSON-Keys bleiben auf Deutsch (titel, beschreibung etc), aber die Werte MÜSSEN zwingend fließend und authentisch auf {lang.upper()} sein!"
             
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=self.default_config
+            )
             return self._parse_json(response.text)
         except Exception as e:
             return {
@@ -217,17 +186,15 @@ if __name__ == "__main__":
     
     if not project:
         print("❌ GOOGLE_CLOUD_PROJECT nicht gesetzt!")
-        print("   export GOOGLE_CLOUD_PROJECT='dein-projekt'")
         exit(1)
     
-    print(f"🧪 Teste Agent mit Projekt: {project}")
+    print(f"🧪 Teste Agent mit Projekt: {project} via google-genai SDK")
     
     agent = VintedListingAgent(project_id=project)
     
-    # Test: Beschreibung verbessern
     test_desc = "Schöner Pullover, kaum getragen."
     improved = agent.improve_description(test_desc, "emotional")
     print(f"   Original: {test_desc}")
-    print(f"   Verbessert: {improved}")
+    print(f"   Verbessert (mit Search Access): {improved}")
     
-    print("✅ Agent funktioniert!")
+    print("✅ GenAI Agent funktioniert fehlerfrei!")

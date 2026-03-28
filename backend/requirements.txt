@@ -1,5 +1,6 @@
-# Vertex AI SDK
+# Vertex AI SDK & Google GenAI
 google-cloud-aiplatform>=1.65.0
+google-genai>=0.2.0
 
 # Web Framework
 fastapi>=0.110.0

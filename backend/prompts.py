@@ -64,9 +64,8 @@ Ein Fließtext (3-4 Sätze), der den Artikel im Detail beschreibt. Verwende dabe
 
 [Absatz 2 - Neupreis & Web-Recherche]
 DU HAST ZUGRIFF AUF DIE GOOGLE SUCHE! Recherchiere SOFORT im Internet nach der gefundenen Marke + Optik / Modellbezeichnung / Seriennummer auf den Schildern. 
-Gibt es den Artikel aktuell noch offiziell neu zu kaufen?
-- WENN JA: Nenne den exakten aktuellen Neupreis und VOR ALLEM DEN LINK ZUM OFFIZIELLEN SHOP ODER HERSTELLER, z.B. "Neupreis: 99,99€ (aktuell noch erhältlich hier: https://...)".
-- WENN NEIN (ausverkauft/altes Modell): Schreibe: "Neupreis: ca. [Schätzung]€ (Dieses genaue Modell ist aktuell beim Hersteller restlos ausverkauft / nicht mehr regulär erhältlich.)"
+Ermittle den ursprünglichen oder aktuellen Neupreis.
+Schreibe AUSSCHLIESSLICH: "Neupreis: [Zahl] €" (oder "Neupreis: circa [Zahl] €"). Füge KEINE Links, KEINE URLs und absolut KEINE Erklärungen hinzu, ob das Modell ausverkauft oder noch erhältlich ist!
 
 [Absatz 3 - Mängel]
 Mängel: [Mängel aus den Hinweisen verwenden, oder "Nicht bekannt" falls keine Infos vorliegen]

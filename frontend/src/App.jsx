@@ -295,6 +295,11 @@ export default function App() {
                             <p style={styles.placeholderText}>
                                 {loading ? t.uploading : t.uploadPlaceholder}
                             </p>
+                            {!loading && (
+                                <p style={{ fontSize: 13, marginTop: 4, opacity: 0.8, fontWeight: 500 }}>
+                                    Es können 1 bis maximal 5 Bilder ausgewählt werden
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>
@@ -386,6 +391,9 @@ export default function App() {
                                     <div style={styles.priceMain}>{result.preis.empfohlen} €</div>
                                     <div style={styles.priceRange}>
                                         {t.priceFast}: {result.preis.schnell_verkaufen}€ &middot; {t.priceMax}: {result.preis.maximum}€
+                                    </div>
+                                    <div style={{fontSize: 11, color: '#007782', opacity: 0.7, marginTop: 12, fontStyle: 'italic'}}>
+                                        Basierend auf online gefundenen Vinted-Vergleichsinseraten
                                     </div>
                                 </>
                             ) : (
